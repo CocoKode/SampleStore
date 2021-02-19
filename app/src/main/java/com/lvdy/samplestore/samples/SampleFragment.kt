@@ -1,24 +1,33 @@
-package com.lvdy.samplestore
+package com.lvdy.samplestore.samples
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.lvdy.samplestore.R
+import com.lvdy.samplestore.startFragment
+import dagger.android.support.AndroidSupportInjection
+import dagger.android.support.DaggerFragment
+import javax.inject.Inject
 
-class SampleFragment : Fragment() {
+class SampleFragment : DaggerFragment() {
 
-    val mItemArray = arrayOf(
-            SampleItem("Fragment探究", FragActivity::class.java)
-    )
+    /**
+     *  注意
+     *  kotlin会默认将泛型中的类型设置上界，需要添加jvmsuppresswildcards，否则找不到
+     *  https://github.com/google/dagger/issues/668#issuecomment-289713497
+     */
+    @Inject lateinit var mSampleSet: Set<@JvmSuppressWildcards SampleBean>;
+
+    override fun onAttach(context: Context) {
+        AndroidSupportInjection.inject(this)
+        super.onAttach(context)
+    }
 
     override fun onCreateView(inflater: LayoutInflater,
                               container: ViewGroup?, savedInstanceState: Bundle?)
@@ -28,46 +37,43 @@ class SampleFragment : Fragment() {
                 container,
                 false)
         val sampleRecyclerView = view.findViewById<RecyclerView>(R.id.rv_sample)
+        sampleRecyclerView.adapter = SampleAdapter(mSampleSet.toList())
         sampleRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         sampleRecyclerView.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.HORIZONTAL))
         sampleRecyclerView.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
-//        sampleRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        sampleRecyclerView.adapter = SampleAdapter()
 
         return view
     }
 
-    inner class SampleAdapter : RecyclerView.Adapter<SampleViewHolder>() {
+    inner class SampleAdapter(list: List<SampleBean>) : RecyclerView.Adapter<SampleViewHolder>() {
+
+        private val sampleList: List<SampleBean> = list
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SampleViewHolder {
             return SampleViewHolder(requireContext(), parent)
         }
 
         override fun getItemCount(): Int {
-            return mItemArray.size
+            return sampleList.size
         }
 
         override fun onBindViewHolder(holder: SampleViewHolder, position: Int) {
-            holder.bind(requireContext(), position)
+            holder.bind(requireContext(), sampleList[position])
         }
-
-
     }
 
-    inner class SampleViewHolder : RecyclerView.ViewHolder {
-        fun bind(context: Context, position: Int) {
-            description.text = mItemArray[position].description
+    inner class SampleViewHolder(context: Context, parent: ViewGroup) : RecyclerView.ViewHolder(LayoutInflater.from(context).inflate(R.layout.item_sample, parent, false)) {
+        fun bind(context: Context, sampleBean: SampleBean) {
+            description.text = sampleBean.description
             itemView.setOnClickListener(View.OnClickListener {
-                context.startActivity(Intent(context, mItemArray[adapterPosition].targetClazz))
+                requireActivity().startFragment(
+                        R.id.main_frag_container,
+                        sampleBean.createFragment())
             })
         }
 
         var description: TextView = itemView.findViewById(R.id.tv_description)
 
-        constructor(context: Context, parent: ViewGroup)
-                : super(LayoutInflater.from(context).inflate(R.layout.item_sample, parent, false))
     }
-
-
-    class SampleItem(val description: String, val targetClazz: Class<FragActivity>) {}
 
 }

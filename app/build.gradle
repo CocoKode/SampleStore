@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -43,6 +44,17 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
+    // kotlin相关
     implementation "androidx.core:core-ktx:$rootProject.ktxVersion"
+    // fragmnet相关
     implementation "androidx.fragment:fragment-ktx:$rootProject.ktFragmentVersion"
+
+    // dagger for Android 相关
+    implementation "com.google.dagger:dagger-android:$rootProject.daggerVersion"
+    implementation "com.google.dagger:dagger-android-support:$rootProject.daggerVersion"
+    // dagger 编译相关
+    // For Kotlin projects, use kapt in place of annotationProcessor.
+    kapt "com.google.dagger:dagger-android-processor:$rootProject.daggerVersion"
+    kapt "com.google.dagger:dagger-compiler:$rootProject.daggerVersion"
+
 }
